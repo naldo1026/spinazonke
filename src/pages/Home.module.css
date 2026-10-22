@@ -1,0 +1,111 @@
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  padding: 26px 20px 22px;
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 18px),
+    var(--grad-purple-pink);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 520px;
+}
+.heroText :global(.eyebrow) {
+  color: var(--pl-green);
+}
+
+.heroTitle {
+  font-size: clamp(2.8rem, 12vw, 4.8rem);
+  font-style: italic;
+}
+.heroTitle em {
+  font-style: inherit;
+  color: var(--pl-green);
+}
+
+.startBtn {
+  align-self: stretch;
+  font-size: 1.6rem;
+  padding: 0.8em 1em;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.25);
+  background: var(--pl-white);
+  color: var(--pl-purple);
+}
+
+@media (min-width: 760px) {
+  .hero {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 34px 32px;
+  }
+  .startBtn {
+    align-self: auto;
+  }
+}
+
+.owed {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: rgba(232, 17, 45, 0.15);
+  border: 1px solid rgba(232, 17, 45, 0.5);
+}
+.owed h3 {
+  font-size: 1.3rem;
+}
+.owed p {
+  font-size: 0.85rem;
+}
+.owed > div {
+  flex: 1;
+  min-width: 0;
+}
+.owedCard {
+  width: 28px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--red-card);
+  transform: rotate(-8deg);
+  flex: none;
+  box-shadow: 0 6px 14px rgba(232, 17, 45, 0.45);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 680px) {
+  .cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}

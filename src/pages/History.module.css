@@ -1,0 +1,88 @@
+.quick {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.quick p {
+  font-size: 0.9rem;
+}
+
+.quickRow {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 5px solid;
+}
+
+.gwBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  font-family: var(--font-display);
+  min-width: 44px;
+  padding-top: 2px;
+}
+.gwBadge span {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  font-weight: 700;
+}
+.gwBadge strong {
+  font-size: 1.9rem;
+  font-weight: 900;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.loserSelect {
+  width: auto;
+  padding: 6px 30px 6px 10px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+
+.landed {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}

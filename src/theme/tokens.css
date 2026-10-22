@@ -1,0 +1,38 @@
+:root {
+  /* Premier League–inspired palette */
+  --pl-purple: #37003c;
+  --pl-pink: #ff2882;
+  --pl-green: #00ff85;
+  --pl-cyan: #04f5ff;
+  --pl-white: #ffffff;
+
+  /* Supporting shades */
+  --pl-purple-deep: #1c001f;
+  --pl-purple-mid: #4b0a52;
+  --pl-purple-light: #6a1f72;
+  --red-card: #e8112d;
+  --yellow-card: #ffd200;
+  --ink-dim: rgba(255, 255, 255, 0.7);
+  --ink-faint: rgba(255, 255, 255, 0.45);
+  --line: rgba(255, 255, 255, 0.12);
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-strong: rgba(255, 255, 255, 0.1);
+
+  /* Broadcast gradients */
+  --grad-purple-pink: linear-gradient(120deg, var(--pl-purple) 0%, #7a0a6c 45%, var(--pl-pink) 100%);
+  --grad-cyan-green: linear-gradient(120deg, var(--pl-cyan) 0%, var(--pl-green) 100%);
+  --grad-pink-cyan: linear-gradient(120deg, var(--pl-pink) 0%, #9b4dff 50%, var(--pl-cyan) 100%);
+
+  --font-display: 'Barlow Condensed', 'Oswald', Impact, 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-glow-pink: 0 0 0 2px rgba(255, 40, 130, 0.35), 0 10px 30px rgba(255, 40, 130, 0.35);
+
+  --header-h: 60px;
+  --tabbar-h: 64px;
+  --page-max: 980px;
+}
