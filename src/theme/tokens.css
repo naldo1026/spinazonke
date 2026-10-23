@@ -25,6 +25,12 @@
 
   --font-display: 'Barlow Condensed', 'Oswald', Impact, 'Arial Narrow', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Horror moments: the coin toss and the wheel */
+  --font-horror: 'Special Elite', 'Courier New', ui-monospace, monospace;
+  --font-engraved: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --blood: #8b0a1a;
+  --blood-bright: #ff2236;
+  --bone: #eadcc4;
 
   --radius-sm: 8px;
   --radius: 14px;

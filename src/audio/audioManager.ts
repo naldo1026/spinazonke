@@ -7,6 +7,9 @@ export type Sfx = 'coin' | 'whistle' | 'crowd';
 const FADE_MS = 300;
 const base = import.meta.env.BASE_URL;
 
+/** Seconds into each track to start from, and to loop back to (skips slow intros). */
+const START_AT: Record<Track, number> = { dramatic: 25, clown: 0 };
+
 interface Channel {
   el: HTMLAudioElement;
   /** 0–1 level before the master volume, animated by fades. */
@@ -26,6 +29,7 @@ interface Channel {
 class AudioManager {
   private channels = new Map<Track, Channel>();
   private listeners = new Set<() => void>();
+  private ctx?: AudioContext;
   private muted = false;
   private volume = 0.8;
 
@@ -47,6 +51,7 @@ class AudioManager {
   play(track: Track): void {
     const ch = this.channel(track);
     if (ch.el.paused) {
+      this.seekToStart(track, ch.el);
       ch.gain = 0;
       this.applyLevel(ch);
       ch.el.play().then(
@@ -88,12 +93,52 @@ class AudioManager {
     el.play().catch(() => {});
   }
 
+  /**
+   * Synthesised heartbeat (no file needed) that speeds up over `seconds`.
+   * Call it from a click so the browser lets the AudioContext start.
+   */
+  heartbeat(seconds: number): void {
+    if (this.muted || this.volume === 0) return;
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    this.ctx ??= new Ctx();
+    const ctx = this.ctx;
+    void ctx.resume();
+    let at = ctx.currentTime + 0.05;
+    let gap = 0.9;
+    while (at < ctx.currentTime + seconds) {
+      this.thump(ctx, at, 1);
+      this.thump(ctx, at + 0.2, 0.65);
+      at += gap;
+      gap = Math.max(0.45, gap * 0.86);
+    }
+  }
+
+  private thump(ctx: AudioContext, at: number, strength: number): void {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(95, at);
+    osc.frequency.exponentialRampToValueAtTime(42, at + 0.14);
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, strength * this.volume), at + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.24);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + 0.3);
+  }
+
   private channel(track: Track): Channel {
     let ch = this.channels.get(track);
     if (!ch) {
       const el = new Audio(`${base}audio/${track}.mp3`);
-      el.loop = true;
+      // Looped by hand so it restarts from START_AT rather than 0.
+      el.loop = false;
       el.preload = 'auto';
+      el.addEventListener('ended', () => {
+        el.currentTime = this.startOf(track, el);
+        el.play().catch(() => {});
+      });
       const created: Channel = { el, gain: 0, available: true };
       el.addEventListener('error', () => {
         created.available = false;
@@ -103,6 +148,21 @@ class AudioManager {
       this.channels.set(track, ch);
     }
     return ch;
+  }
+
+  /** START_AT for the track, or 0 if the file turns out to be shorter than that. */
+  private startOf(track: Track, el: HTMLAudioElement): number {
+    const at = START_AT[track];
+    return Number.isFinite(el.duration) && at >= el.duration ? 0 : at;
+  }
+
+  private seekToStart(track: Track, el: HTMLAudioElement): void {
+    if (el.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      el.currentTime = this.startOf(track, el);
+    } else {
+      // First play: the file hasn't loaded yet, so seek as soon as its length is known.
+      el.addEventListener('loadedmetadata', () => (el.currentTime = this.startOf(track, el)), { once: true });
+    }
   }
 
   private applyLevel(ch: Channel): void {

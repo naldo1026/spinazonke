@@ -1,15 +1,16 @@
 import confetti from 'canvas-confetti';
 
-const COLOURS = ['#FF2882', '#04F5FF', '#00FF85', '#FFFFFF', '#37003C'];
+const PL_COLOURS = ['#FF2882', '#04F5FF', '#00FF85', '#FFFFFF', '#37003C'];
+export const BLOOD_COLOURS = ['#8b0a1a', '#ff2236', '#3a0008', '#eadcc4', '#120208'];
 
 /** Goal-celebration confetti from both corners plus a centre burst. */
-export function celebrate(): void {
+export function celebrate(colours: string[] = PL_COLOURS): void {
   const end = Date.now() + 1400;
   const frame = () => {
-    confetti({ particleCount: 6, angle: 60, spread: 60, origin: { x: 0, y: 0.75 }, colors: COLOURS, zIndex: 300 });
-    confetti({ particleCount: 6, angle: 120, spread: 60, origin: { x: 1, y: 0.75 }, colors: COLOURS, zIndex: 300 });
+    confetti({ particleCount: 6, angle: 60, spread: 60, origin: { x: 0, y: 0.75 }, colors: colours, zIndex: 300 });
+    confetti({ particleCount: 6, angle: 120, spread: 60, origin: { x: 1, y: 0.75 }, colors: colours, zIndex: 300 });
     if (Date.now() < end) requestAnimationFrame(frame);
   };
-  confetti({ particleCount: 140, spread: 100, startVelocity: 45, origin: { y: 0.55 }, colors: COLOURS, zIndex: 300 });
+  confetti({ particleCount: 140, spread: 100, startVelocity: 45, origin: { y: 0.55 }, colors: colours, zIndex: 300 });
   frame();
 }

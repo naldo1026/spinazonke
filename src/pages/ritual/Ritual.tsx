@@ -69,7 +69,7 @@ export function Ritual() {
   const stepKeys = STEP_LABELS.map((label, i) => ({ label, step: i + 1 })).filter(
     (s) => s.step !== 5 || ritual.revealDue,
   );
-  const dark = ritual.step === 3;
+  const dark = ritual.step === 3 || ritual.step === 4;
 
   const cancel = (undoLoss: boolean) => {
     audio.stopAll();

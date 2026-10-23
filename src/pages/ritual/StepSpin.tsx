@@ -5,13 +5,15 @@ import { MIN_WHEEL_PRE_TOSS, wheelItems } from '../../store/selectors';
 import { playerName } from '../../data/players';
 import { randomFloat, randomInt, randomRange } from '../../lib/random';
 import { targetRotation } from '../../lib/wheelMath';
-import { celebrate } from '../../lib/celebrate';
+import { BLOOD_COLOURS, celebrate } from '../../lib/celebrate';
 import { audio } from '../../audio/audioManager';
 import { Wheel } from '../../components/Wheel';
 import { Anim, hasLottie } from '../../components/Anim';
 import styles from './Ritual.module.css';
 
 type Phase = 'ready' | 'spinning' | 'landed';
+
+const SPIN_MS = 10_000;
 
 export function StepSpin({ ritual }: { ritual: RitualState }) {
   const consequences = useStore((s) => s.consequences);
@@ -44,7 +46,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
     if (fanfare) {
       audio.stop('clown');
       audio.sfx('whistle');
-      celebrate();
+      celebrate(BLOOD_COLOURS);
     }
   }, []);
 
@@ -62,8 +64,8 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
     const n = items.length;
     if (n < minimum) return;
     const index = randomInt(n);
-    const final = targetRotation(index, n, randomRange(5, 8), randomFloat() - 0.5);
-    const durationMs = randomRange(6000, 8000);
+    const final = targetRotation(index, n, randomRange(6, 9), randomFloat() - 0.5);
+    const durationMs = SPIN_MS;
     // Saved before the wheel moves, so refreshing can't re-roll it.
     updateRitual({
       spin: { segmentIds: items.map((c) => c.id), targetId: items[index].id, rotation: final, durationMs, committed: false },
@@ -79,15 +81,15 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
 
   return (
     <div className={`${styles.step} ${styles.center}`}>
-      <span className="eyebrow">Step 4 · The wheel</span>
+      <span className="eyebrow">Step 4 · The wheel of fate</span>
       <h1 className={styles.title}>
         {phase === 'landed' ? (
           <>
-            Full <em>time</em>
+            The wheel <em>has spoken</em>
           </>
         ) : (
           <>
-            {loser}, <em>spin it</em>
+            {loser}, <em>face the wheel</em>
           </>
         )}
       </h1>
@@ -95,7 +97,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
       <Wheel
         items={items}
         rotation={rotation}
-        durationMs={phase === 'spinning' ? (ritual.spin?.durationMs ?? 7000) : 0}
+        durationMs={phase === 'spinning' ? (ritual.spin?.durationMs ?? SPIN_MS) : 0}
         onSpinEnd={() => finish(true)}
         highlightId={phase === 'landed' ? ritual.spin?.targetId : undefined}
       />
@@ -107,7 +109,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
               Need at least {minimum} on the wheel to spin. Add or re-enable some in the Bank.
             </p>
           ) : (
-            <p className="muted">{items.length} consequences on the wheel. No take-backs.</p>
+            <p className="muted">{items.length} fates on the wheel. No take-backs. No mercy.</p>
           )}
           <button
             type="button"
@@ -120,7 +122,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
         </>
       )}
 
-      {phase === 'spinning' && <p className="muted">Round and round it goes…</p>}
+      {phase === 'spinning' && <p className="muted">No going back now…</p>}
 
       {phase === 'landed' && landed && (
         <>
@@ -135,7 +137,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
           </div>
           <button
             type="button"
-            className="btn btn-primary btn-lg"
+            className={`btn btn-lg ${styles.sawBtnPlay}`}
             onClick={() => updateRitual({ step: ritual.revealDue ? 5 : 6 })}
           >
             {ritual.revealDue ? 'One more thing…' : 'Continue'}

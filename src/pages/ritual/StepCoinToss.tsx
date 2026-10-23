@@ -6,7 +6,7 @@ import { MIN_WHEEL_PRE_TOSS, TOSS_REMOVALS, wheelItems } from '../../store/selec
 import { joinNames, playerName } from '../../data/players';
 import { coinFlip } from '../../lib/random';
 import { audio } from '../../audio/audioManager';
-import { Coin } from '../../components/Coin';
+import { Coin, FLIP_MS } from '../../components/Coin';
 import { Typewriter } from '../../components/Typewriter';
 import styles from './Ritual.module.css';
 
@@ -26,6 +26,17 @@ function Puppet() {
   );
 }
 
+/** Fog, heartbeat vignette and the red flash on impact. Fixed behind the content. */
+function Atmosphere({ beat, flash }: { beat?: 'slow' | 'fast'; flash?: boolean }) {
+  return (
+    <>
+      <div className={styles.fog} aria-hidden="true" />
+      {beat && <div className={`${styles.vignette} ${beat === 'fast' ? styles.vignetteFast : ''}`} aria-hidden="true" />}
+      {flash && <div className={styles.flash} aria-hidden="true" />}
+    </>
+  );
+}
+
 export function StepCoinToss({ ritual }: { ritual: RitualState }) {
   const consequences = useStore((s) => s.consequences);
   const updateRitual = useStore((s) => s.updateRitual);
@@ -33,6 +44,7 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
 
   const [typed, setTyped] = useState(false);
   const [flipping, setFlipping] = useState(false);
+  const [impact, setImpact] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
 
   const toss = ritual.toss ?? { phase: 'intro' as const };
@@ -52,6 +64,13 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
     updateRitual({ toss: { phase: 'flip', call: side, result, winner: result === side ? 'loser' : 'others' } });
     setFlipping(true);
     audio.sfx('coin');
+    audio.heartbeat(FLIP_MS / 1000);
+  };
+
+  const landed = () => {
+    setFlipping(false);
+    setImpact(true);
+    setTimeout(() => setImpact(false), 900);
   };
 
   const confirmRemoval = () => {
@@ -68,6 +87,7 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
   if (toss.phase === 'intro') {
     return (
       <div className={`${styles.step} ${styles.center} ${styles.saw}`}>
+        <Atmosphere />
         <Puppet />
         <Typewriter
           text="Do you want to play a game?"
@@ -103,11 +123,13 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
   if (toss.phase === 'call') {
     return (
       <div className={`${styles.step} ${styles.center} ${styles.saw}`}>
-        <span className="eyebrow" style={{ color: '#c33' }}>
-          Make your choice
-        </span>
-        <h1 className={styles.title}>{loser}, call it.</h1>
-        <Coin flipping={false} />
+        <Atmosphere beat="slow" />
+        <span className={styles.omen}>Live or die</span>
+        <h1 className={styles.horrorTitle}>{loser}, call it.</h1>
+        <Coin flipping={false} idle />
+        <p className={styles.lead} style={{ color: '#a59a9a' }}>
+          Heads or tails. Choose wisely.
+        </p>
         <div className={styles.actions}>
           <button type="button" className={`btn btn-lg ${styles.sawBtnPlay}`} onClick={() => call('heads')}>
             Heads
@@ -124,16 +146,19 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
     const loserWon = toss.winner === 'loser';
     return (
       <div className={`${styles.step} ${styles.center} ${styles.saw}`}>
-        <span className="eyebrow" style={{ color: '#c33' }}>
+        <Atmosphere beat={flipping ? 'fast' : 'slow'} flash={impact} />
+        <span className={styles.omen}>
           {loser} called {toss.call}
         </span>
-        <Coin result={toss.result} flipping={flipping} onDone={() => setFlipping(false)} />
+        <div className={impact ? styles.impact : undefined}>
+          <Coin result={toss.result} flipping={flipping} onDone={landed} />
+        </div>
         {!flipping && (
           <>
-            <p className={styles.result}>{toss.result}!</p>
+            <p className={styles.result}>{toss.result}.</p>
             <p className={styles.lead} style={{ color: '#ddd' }}>
               {loserWon
-                ? `${loser} wins the toss and picks ${TOSS_REMOVALS} to strike off.`
+                ? `${loser} survives the toss and picks ${TOSS_REMOVALS} to strike off.`
                 : `${loser} loses the toss. ${others} pick ${TOSS_REMOVALS} to strike off.`}
             </p>
             <button
@@ -156,10 +181,11 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
 
   return (
     <div className={`${styles.step} ${styles.center} ${styles.saw}`}>
-      <span className="eyebrow" style={{ color: '#c33' }}>
+      <Atmosphere />
+      <span className={styles.omen}>
         {picker} {toss.winner === 'loser' ? 'picks' : 'pick'}
       </span>
-      <h1 className={styles.title}>Strike {TOSS_REMOVALS} off</h1>
+      <h1 className={styles.horrorTitle}>Strike {TOSS_REMOVALS} off</h1>
       <p className={styles.lead} style={{ color: '#aaa' }}>
         They're off this week's wheel and go back to the bank. Not deleted.
       </p>

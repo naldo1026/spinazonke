@@ -10,6 +10,12 @@
     radial-gradient(ellipse at 50% 30%, rgba(120, 0, 0, 0.25), transparent 60%),
     #050004;
 }
+.dark :global(.eyebrow) {
+  color: #d4142c;
+}
+.dark .title em {
+  color: var(--blood-bright);
+}
 
 .topBar {
   border-bottom: 1px solid var(--line);
@@ -269,9 +275,8 @@
 }
 
 .sawLine {
-  font-family: 'Courier New', ui-monospace, monospace;
-  font-size: clamp(1.6rem, 6.5vw, 2.6rem);
-  font-weight: 700;
+  font-family: var(--font-horror);
+  font-size: clamp(1.7rem, 7vw, 2.8rem);
   color: #e8e0d0;
   text-shadow: 0 0 12px rgba(232, 17, 45, 0.55), 2px 0 0 rgba(232, 17, 45, 0.35);
   animation: jitter 3s infinite;
@@ -298,9 +303,9 @@
 }
 
 .sawBtnPlay {
-  background: #b00018;
-  color: #fff;
-  box-shadow: 0 0 30px rgba(232, 17, 45, 0.5);
+  background: linear-gradient(180deg, #c0001c, #7a0010);
+  color: var(--bone);
+  box-shadow: 0 0 30px rgba(232, 17, 45, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 .sawBtnSkip {
   background: transparent;
@@ -309,13 +314,128 @@
 }
 
 .result {
-  font-family: var(--font-display);
+  font-family: var(--font-engraved);
   font-weight: 900;
-  font-size: clamp(2.6rem, 12vw, 4.2rem);
+  font-size: clamp(2.8rem, 13vw, 4.6rem);
+  line-height: 1;
   text-transform: uppercase;
-  font-style: italic;
-  color: var(--yellow-card);
-  text-shadow: 0 0 24px rgba(255, 210, 0, 0.45);
+  letter-spacing: 0.08em;
+  color: var(--blood-bright);
+  text-shadow: 0 0 28px rgba(255, 20, 40, 0.7), 0 2px 0 #3a0008;
+  animation: flicker 3s infinite;
+}
+
+.omen {
+  font-family: var(--font-horror);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.95rem;
+  color: #c3142a;
+  text-shadow: 0 0 10px rgba(195, 20, 42, 0.6);
+}
+
+.horrorTitle {
+  font-family: var(--font-horror);
+  font-weight: 400;
+  text-transform: none;
+  font-size: clamp(2rem, 9vw, 3rem);
+  color: var(--bone);
+  text-shadow: 0 0 14px rgba(232, 17, 45, 0.45);
+}
+
+/* Atmosphere layers. Fixed, behind the content (after .saw > * so they win). */
+.fog,
+.vignette,
+.flash {
+  position: fixed;
+  pointer-events: none;
+}
+.fog {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50vh;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 40% 60% at 20% 100%, rgba(190, 175, 175, 0.14), transparent 70%),
+    radial-gradient(ellipse 35% 55% at 75% 100%, rgba(190, 175, 175, 0.11), transparent 70%),
+    radial-gradient(ellipse 30% 45% at 48% 100%, rgba(170, 155, 155, 0.13), transparent 70%);
+  background-size: 140% 100%;
+  filter: blur(6px);
+  animation: drift 14s ease-in-out infinite alternate;
+}
+.vignette {
+  inset: 0;
+  z-index: 0;
+  box-shadow: inset 0 0 140px 50px rgba(150, 0, 15, 0.55);
+  animation: beat 1.2s ease-in-out infinite;
+}
+.vignetteFast {
+  box-shadow: inset 0 0 170px 80px rgba(175, 0, 20, 0.65);
+  animation-duration: 0.62s;
+}
+.flash {
+  inset: 0;
+  z-index: 60;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 20, 40, 0.55), rgba(120, 0, 10, 0.4) 60%, rgba(40, 0, 4, 0.2));
+  animation: flashOut 0.85s ease-out forwards;
+}
+.impact {
+  animation: slam 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes drift {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+@keyframes beat {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  12% {
+    opacity: 1;
+  }
+  24% {
+    opacity: 0.45;
+  }
+  36% {
+    opacity: 0.9;
+  }
+  55% {
+    opacity: 0.35;
+  }
+}
+@keyframes flashOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes slam {
+  10%,
+  90% {
+    transform: translate(-2px, 1px);
+  }
+  20%,
+  80% {
+    transform: translate(5px, -3px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate(-8px, 4px);
+  }
+  40%,
+  60% {
+    transform: translate(8px, -4px);
+  }
 }
 
 .pickList {
@@ -372,12 +492,25 @@
 .spinBtn {
   font-size: 2rem;
   padding: 0.5em 2.2em;
-  letter-spacing: 0.12em;
-  animation: pulse 1.4s ease-in-out infinite;
+  letter-spacing: 0.14em;
+  background: linear-gradient(180deg, #c0001c, #7a0010);
+  color: var(--bone);
+  box-shadow: 0 6px 24px rgba(200, 0, 20, 0.5);
+  animation: pulse 1.2s ease-in-out infinite;
 }
 @keyframes pulse {
-  50% {
-    box-shadow: 0 0 0 10px rgba(255, 40, 130, 0.15), 0 6px 30px rgba(255, 40, 130, 0.6);
+  0%,
+  100% {
+    box-shadow: 0 6px 24px rgba(200, 0, 20, 0.5);
+  }
+  12% {
+    box-shadow: 0 0 0 10px rgba(255, 20, 40, 0.18), 0 6px 34px rgba(255, 20, 40, 0.75);
+  }
+  24% {
+    box-shadow: 0 6px 24px rgba(200, 0, 20, 0.5);
+  }
+  36% {
+    box-shadow: 0 0 0 7px rgba(255, 20, 40, 0.14), 0 6px 30px rgba(255, 20, 40, 0.65);
   }
 }
 
@@ -387,12 +520,13 @@
   flex-direction: column;
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: var(--shadow);
+  box-shadow: 0 0 40px rgba(200, 0, 20, 0.35), var(--shadow);
+  border: 1px solid rgba(255, 34, 54, 0.35);
   text-align: left;
 }
 .ltTop {
-  background: var(--pl-green);
-  color: var(--pl-purple);
+  background: var(--blood);
+  color: var(--bone);
   font-family: var(--font-display);
   font-weight: 900;
   text-transform: uppercase;
@@ -402,8 +536,8 @@
   justify-content: space-between;
 }
 .ltMain {
-  background: var(--pl-white);
-  color: var(--pl-purple);
+  background: #0b0306;
+  color: var(--bone);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(1.7rem, 7vw, 2.4rem);
@@ -412,8 +546,8 @@
   text-transform: uppercase;
 }
 .ltStripe {
-  height: 6px;
-  background: var(--grad-pink-cyan);
+  height: 5px;
+  background: linear-gradient(90deg, #3a0008, var(--blood-bright), #3a0008);
 }
 
 .confettiLottie {
