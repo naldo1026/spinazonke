@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { Settings } from '../types';
 
 export type Track = 'dramatic' | 'clown';
-export type Sfx = 'coin' | 'whistle' | 'crowd';
+export type Sfx = 'coin' | 'whistle' | 'crowd' | 'celebrate';
 
 const FADE_MS = 300;
 const base = import.meta.env.BASE_URL;

@@ -45,7 +45,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
     setPhase('landed');
     if (fanfare) {
       audio.stop('clown');
-      audio.sfx('whistle');
+      audio.sfx('celebrate');
       celebrate(BLOOD_COLOURS);
     }
   }, []);
