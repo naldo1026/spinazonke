@@ -4,5 +4,5 @@ import type { PlayerId } from '../types';
 export const PHOTO_MANIFEST: Record<PlayerId, string[]> = {
   ronaldo: [],
   kyle: [],
-  keanan: [],
+  keanan: ["photos/keanan/01.jpg","photos/keanan/02.jpg","photos/keanan/03.jpg","photos/keanan/04.jpg","photos/keanan/05.jpg","photos/keanan/06.jpg","photos/keanan/07.jpg","photos/keanan/08.jpg","photos/keanan/09.jpg","photos/keanan/10.jpg","photos/keanan/11.jpg"],
 };
