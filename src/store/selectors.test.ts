@@ -21,7 +21,7 @@ const gw = (gameWeek: number, loser: PlayerId): GameWeekEntry => ({
 describe('seed state', () => {
   const seed = createSeedState();
 
-  it('has Ronaldo 1, Kyle 2, Keanan 4 over GW1–7', () => {
+  it('has Ronaldo 1, Kyle 2, Keanen 4 over GW1–7', () => {
     expect(lossesByPlayer(seed.gameWeeks)).toEqual({ ronaldo: 1, kyle: 2, keanan: 4 });
     expect(seed.gameWeeks.map((g) => g.gameWeek)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(seed.gameWeeks.every((g) => g.legacy)).toBe(true);
@@ -31,7 +31,7 @@ describe('seed state', () => {
     expect(nextGameWeek(seed.gameWeeks)).toBe(8);
   });
 
-  it('leaves Keanan on a final heart', () => {
+  it('leaves Keanen on a final heart', () => {
     expect(heartsLeft(4)).toBe(1);
     expect(heartsLeft(1)).toBe(4);
   });

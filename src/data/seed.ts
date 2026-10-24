@@ -5,7 +5,7 @@ import { PLAYERS } from './players';
 export const STATE_VERSION = 1;
 
 // GW1–7 were played before the app existed. The real order isn't known, so
-// this is a guess that adds up to Ronaldo 1, Kyle 2, Keanan 4. Fix it in History.
+// this is a guess that adds up to Ronaldo 1, Kyle 2, Keanen 4. Fix it in History.
 const LEGACY_LOSERS: PlayerId[] = ['keanan', 'kyle', 'keanan', 'ronaldo', 'keanan', 'kyle', 'keanan'];
 
 const EXAMPLE_CONSEQUENCES = [

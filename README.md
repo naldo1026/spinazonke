@@ -35,7 +35,7 @@ Other scripts:
 
 If you refresh mid-ritual it picks up where you left off. Cancelling after step 1 asks whether to keep or undo the loss.
 
-GW1–7 are seeded as Ronaldo 1, Kyle 2, Keanan 4. The real order wasn't known, so check them in **History** and fix any that are wrong.
+GW1–7 are seeded as Ronaldo 1, Kyle 2, Keanen 4. The real order wasn't known, so check them in **History** and fix any that are wrong.
 
 ## Adding photos
 

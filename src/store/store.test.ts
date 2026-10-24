@@ -11,7 +11,7 @@ beforeEach(() => {
 });
 
 describe('recordLoss', () => {
-  it('records GW8 and flags Keanan’s 5th loss as an elimination', () => {
+  it('records GW8 and flags Keanen’s 5th loss as an elimination', () => {
     const res = s().recordLoss(8, 'keanan');
     expect(res).toEqual({ ok: true, eliminated: true });
     expect(lossesByPlayer(s().gameWeeks).keanan).toBe(5);
@@ -32,9 +32,9 @@ describe('recordLoss', () => {
 describe('history edits', () => {
   it('recalculates totals and elimination flags', () => {
     s().recordLoss(8, 'keanan');
-    // Move one of Keanan's legacy losses to Kyle: GW8 is now only his 4th.
-    const legacyKeanan = s().gameWeeks.find((g) => g.loser === 'keanan' && g.legacy)!.gameWeek;
-    s().updateLoser(legacyKeanan, 'kyle');
+    // Move one of Keanen's legacy losses to Kyle: GW8 is now only his 4th.
+    const legacyKeanen = s().gameWeeks.find((g) => g.loser === 'keanan' && g.legacy)!.gameWeek;
+    s().updateLoser(legacyKeanen, 'kyle');
     expect(lossesByPlayer(s().gameWeeks)).toEqual({ ronaldo: 1, kyle: 3, keanan: 4 });
     expect(s().gameWeeks.find((g) => g.gameWeek === 8)?.triggeredReveal).toBeUndefined();
 
