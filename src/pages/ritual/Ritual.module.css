@@ -496,29 +496,23 @@
   border-color: var(--red-card);
 }
 
-/* ---------- Spin ---------- */
+/* ---------- Spin (matchday broadcast) ---------- */
 .spinBtn {
   font-size: 2rem;
-  padding: 0.5em 2.2em;
-  letter-spacing: 0.14em;
-  background: linear-gradient(180deg, #c0001c, #7a0010);
-  color: var(--bone);
-  box-shadow: 0 6px 24px rgba(200, 0, 20, 0.5);
-  animation: pulse 1.2s ease-in-out infinite;
+  font-style: italic;
+  text-transform: uppercase;
+  padding: 0.45em 2.2em;
+  letter-spacing: 0.08em;
+  border-radius: 6px;
+  animation: pulse 1.4s ease-in-out infinite;
 }
 @keyframes pulse {
   0%,
   100% {
-    box-shadow: 0 6px 24px rgba(200, 0, 20, 0.5);
+    box-shadow: 0 6px 20px rgba(255, 40, 130, 0.35);
   }
-  12% {
-    box-shadow: 0 0 0 10px rgba(255, 20, 40, 0.18), 0 6px 34px rgba(255, 20, 40, 0.75);
-  }
-  24% {
-    box-shadow: 0 6px 24px rgba(200, 0, 20, 0.5);
-  }
-  36% {
-    box-shadow: 0 0 0 7px rgba(255, 20, 40, 0.14), 0 6px 30px rgba(255, 20, 40, 0.65);
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 40, 130, 0.18), 0 6px 30px rgba(255, 40, 130, 0.6);
   }
 }
 
@@ -526,36 +520,48 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 0 40px rgba(200, 0, 20, 0.35), var(--shadow);
-  border: 1px solid rgba(255, 34, 54, 0.35);
+  box-shadow: var(--shadow);
   text-align: left;
+  animation: slideIn 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 .ltTop {
-  background: var(--blood);
-  color: var(--bone);
+  background: var(--pl-green);
+  color: var(--pl-purple);
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 800;
+  font-style: italic;
   text-transform: uppercase;
-  font-size: 1.3rem;
-  padding: 4px 14px;
+  font-size: 1rem;
+  padding: 5px 14px;
   display: flex;
   justify-content: space-between;
+  gap: 12px;
 }
 .ltMain {
-  background: #0b0306;
-  color: var(--bone);
+  background: var(--pl-white);
+  color: var(--pl-purple);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(1.7rem, 7vw, 2.4rem);
   line-height: 1.05;
   padding: 12px 14px 14px;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 .ltStripe {
-  height: 5px;
-  background: linear-gradient(90deg, #3a0008, var(--blood-bright), #3a0008);
+  height: 6px;
+  background: linear-gradient(90deg, var(--pl-pink), #9b4dff, var(--pl-cyan));
+}
+@keyframes slideIn {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
 }
 
 .confettiLottie {

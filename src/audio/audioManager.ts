@@ -98,12 +98,8 @@ class AudioManager {
    * Call it from a click so the browser lets the AudioContext start.
    */
   heartbeat(seconds: number): void {
-    if (this.muted || this.volume === 0) return;
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    this.ctx ??= new Ctx();
-    const ctx = this.ctx;
-    void ctx.resume();
+    const ctx = this.context();
+    if (!ctx) return;
     let at = ctx.currentTime + 0.05;
     let gap = 0.9;
     while (at < ctx.currentTime + seconds) {
@@ -112,6 +108,38 @@ class AudioManager {
       at += gap;
       gap = Math.max(0.45, gap * 0.86);
     }
+  }
+
+  /** Starts the synth context. Call it from a click so later ticks can play. */
+  unlock(): void {
+    this.context();
+  }
+
+  /** Short synthesised blip for a wheel segment passing the pointer. */
+  tick(): void {
+    const ctx = this.context();
+    if (!ctx) return;
+    const at = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1700, at);
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.06 * this.volume), at + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.03);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + 0.05);
+  }
+
+  /** The shared AudioContext, or undefined when muted or unsupported. */
+  private context(): AudioContext | undefined {
+    if (this.muted || this.volume === 0) return undefined;
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return undefined;
+    this.ctx ??= new Ctx();
+    void this.ctx.resume();
+    return this.ctx;
   }
 
   private thump(ctx: AudioContext, at: number, strength: number): void {

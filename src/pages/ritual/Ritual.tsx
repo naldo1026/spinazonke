@@ -42,7 +42,7 @@ function NotStarted() {
     <div className={`page ${styles.notStarted}`}>
       <span className="eyebrow">The ritual</span>
       <h1 className="page-title">Game Week {next}</h1>
-      <Wheel items={wheelItems(consequences)} size="min(70vw, 300px)" />
+      <Wheel items={wheelItems(consequences)} gameWeek={next} size="min(70vw, 300px)" />
       <p className="muted">Record the loser, pay to play, toss the coin, spin the wheel.</p>
       <button type="button" className="btn btn-primary btn-lg" onClick={() => startRitual(next)}>
         Start Game Week {next}
@@ -69,7 +69,8 @@ export function Ritual() {
   const stepKeys = STEP_LABELS.map((label, i) => ({ label, step: i + 1 })).filter(
     (s) => s.step !== 5 || ritual.revealDue,
   );
-  const dark = ritual.step === 3 || ritual.step === 4;
+  // The coin toss stays horror. The wheel is matchday, so it keeps the normal pitch background.
+  const dark = ritual.step === 3;
   const tied = gameWeeks.filter((gw) => gw.gameWeek === ritual.gameWeek).length > 1;
   // Losers who haven't finished yet. Anyone who already did keeps their entry.
   const unfinished = ritual.loser ? [ritual.loser, ...(ritual.queue ?? [])] : [];

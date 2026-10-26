@@ -63,3 +63,25 @@ export function truncate(text: string, max: number): string {
   const t = text.trim();
   return t.length <= max ? t : `${t.slice(0, Math.max(1, max - 1)).trimEnd()}…`;
 }
+
+/**
+ * Breaks a label between words into at most `maxLines` lines of `max`
+ * characters. Whatever doesn't fit ends the last line with an ellipsis.
+ */
+export function wrapLabel(text: string, max: number, maxLines = 2): string[] {
+  const lines: string[] = [];
+  let cur = '';
+  for (const word of text.trim().split(/\s+/)) {
+    const next = cur ? `${cur} ${word}` : word;
+    if (next.length <= max || !cur) {
+      cur = next;
+    } else {
+      lines.push(cur);
+      cur = word;
+    }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length <= maxLines) return lines.map((l) => truncate(l, max));
+  const kept = lines.slice(0, maxLines - 1).map((l) => truncate(l, max));
+  return [...kept, truncate(lines.slice(maxLines - 1).join(' '), max)];
+}

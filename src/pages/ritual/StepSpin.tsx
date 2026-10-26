@@ -5,7 +5,7 @@ import { findEntry, MIN_WHEEL_PRE_TOSS, wheelItems } from '../../store/selectors
 import { playerName } from '../../data/players';
 import { randomFloat, randomInt, randomRange } from '../../lib/random';
 import { targetRotation } from '../../lib/wheelMath';
-import { BLOOD_COLOURS, celebrate } from '../../lib/celebrate';
+import { celebrate } from '../../lib/celebrate';
 import { audio } from '../../audio/audioManager';
 import { Wheel } from '../../components/Wheel';
 import { Anim, hasLottie } from '../../components/Anim';
@@ -46,7 +46,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
     if (fanfare) {
       audio.stop('clown');
       audio.sfx('celebrate');
-      celebrate(BLOOD_COLOURS);
+      celebrate();
     }
   }, []);
 
@@ -72,6 +72,8 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
     });
     audio.stop('dramatic');
     audio.play('clown');
+    // This click is the user gesture the pointer ticks need.
+    audio.unlock();
     setPhase('spinning');
     // Let the transition style land before the rotation changes.
     requestAnimationFrame(() => requestAnimationFrame(() => setRotation(final)));
@@ -96,6 +98,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
 
       <Wheel
         items={items}
+        gameWeek={ritual.gameWeek}
         rotation={rotation}
         durationMs={phase === 'spinning' ? (ritual.spin?.durationMs ?? SPIN_MS) : 0}
         onSpinEnd={() => finish(true)}
@@ -129,7 +132,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
           {hasLottie('confetti') && <Anim name="confetti" className={styles.confettiLottie} fallback={null} />}
           <div className={styles.lowerThird}>
             <div className={styles.ltTop}>
-              <span>{loser} must</span>
+              <span>VAR check complete · {loser} must</span>
               <span>GW{ritual.gameWeek}</span>
             </div>
             <div className={styles.ltMain}>{landed.text}</div>
@@ -137,7 +140,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
           </div>
           <button
             type="button"
-            className={`btn btn-lg ${styles.sawBtnPlay}`}
+            className="btn btn-primary btn-lg"
             onClick={() => updateRitual({ step: ritual.revealDue ? 5 : 6 })}
           >
             {ritual.revealDue ? 'One more thing…' : 'Continue'}

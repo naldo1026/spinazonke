@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { segmentAtPointer, segmentColours, targetRotation, truncate } from './wheelMath';
+import { segmentAtPointer, segmentColours, targetRotation, truncate, wrapLabel } from './wheelMath';
 
 describe('targetRotation', () => {
   it('lands the pointer on the chosen segment for every wheel size', () => {
@@ -49,5 +49,25 @@ describe('truncate', () => {
     const cut = truncate('Wear a rival shirt for a whole day', 12);
     expect(cut).toBe('Wear a riva…');
     expect(cut.length).toBeLessThanOrEqual(12);
+  });
+});
+
+describe('wrapLabel', () => {
+  it('splits between words', () => {
+    expect(wrapLabel('Cook dinner for the whole flat', 16)).toEqual(['Cook dinner for', 'the whole flat']);
+    expect(wrapLabel('Short one', 16)).toEqual(['Short one']);
+  });
+
+  it('ends the last line with an ellipsis when it runs over', () => {
+    const lines = wrapLabel('Post "I\'m the worst FPL manager in the flat" on your story', 16);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toBe('Post "I\'m the');
+    expect(lines[1].endsWith('…')).toBe(true);
+    expect(lines[1].length).toBeLessThanOrEqual(16);
+  });
+
+  it('cuts a single long word and respects maxLines', () => {
+    expect(wrapLabel('Supercalifragilistic', 10)).toEqual(['Supercali…']);
+    expect(wrapLabel('Take the bins out for two weeks', 12, 1)).toEqual(['Take the bi…']);
   });
 });

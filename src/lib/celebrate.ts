@@ -1,7 +1,6 @@
 import confetti from 'canvas-confetti';
 
 const PL_COLOURS = ['#FF2882', '#04F5FF', '#00FF85', '#FFFFFF', '#37003C'];
-export const BLOOD_COLOURS = ['#8b0a1a', '#ff2236', '#3a0008', '#eadcc4', '#120208'];
 
 /** Goal-celebration confetti from both corners plus a centre burst. */
 export function celebrate(colours: string[] = PL_COLOURS): void {

@@ -5,31 +5,30 @@
   margin: 0 auto;
 }
 
-/* Red glow behind the wheel, beating like a heart. Faster while it spins. */
+/* Pink floodlight glow behind the wheel. Breathes while it spins. */
 .wrap::before {
   content: '';
   position: absolute;
-  inset: -8%;
+  inset: -10%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(200, 0, 20, 0.5) 0%, rgba(120, 0, 10, 0.22) 45%, transparent 70%);
-  animation: heartbeat 1.6s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255, 40, 130, 0.38) 0%, rgba(155, 77, 255, 0.12) 45%, transparent 68%);
   pointer-events: none;
 }
 .spinning::before {
-  animation-duration: 0.7s;
+  animation: breathe 0.9s ease-in-out infinite alternate;
 }
 
-/* The thud and red flash when it stops */
+/* A quick pop and a white flash when it stops */
 .landed {
-  animation: thud 0.5s ease-out;
+  animation: pop 0.45s ease-out;
 }
 .landed::after {
   content: '';
   position: absolute;
   inset: -12%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 30, 50, 0.6), transparent 65%);
-  animation: flash 1s ease-out forwards;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.55), rgba(4, 245, 255, 0.2) 40%, transparent 65%);
+  animation: flash 0.9s ease-out forwards;
   pointer-events: none;
   z-index: 3;
 }
@@ -39,7 +38,7 @@
   inset: 0;
   z-index: 1;
   will-change: transform;
-  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55));
 }
 
 .svg {
@@ -47,6 +46,16 @@
   height: 100%;
   display: block;
   overflow: visible;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .segment {
@@ -60,98 +69,66 @@
   text-transform: uppercase;
 }
 
-.bulbs circle {
-  fill: #ff1a2e;
-  animation: flicker 2.3s steps(1) infinite;
-}
-.bulbs circle:nth-child(3n) {
-  animation-duration: 1.7s;
-  animation-delay: 0.7s;
-}
-.bulbs circle:nth-child(4n + 1) {
-  animation-delay: 1.3s;
-}
-.bulbs circle:nth-child(5n + 2) {
-  animation-duration: 3.1s;
+.hubText {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-style: italic;
 }
 
-.pointer {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+/* LED board: a few lit at rest, chasing while it spins, blinking green when it lands */
+.led {
+  fill: #fff;
+  opacity: 0.22;
+}
+.led:nth-child(5n) {
+  opacity: 0.8;
+}
+.spinning .led {
+  animation: chase 0.7s linear infinite;
+}
+.landed .led {
+  animation: blink 0.25s steps(1) 6;
 }
 
-.drip {
-  transform-box: fill-box;
-  transform-origin: 50% 0;
-  animation: drip 3s ease-in infinite;
-}
-
-@keyframes heartbeat {
-  0%,
-  100% {
-    transform: scale(0.96);
-    opacity: 0.5;
-  }
-  14% {
-    transform: scale(1.04);
+@keyframes chase {
+  0% {
     opacity: 1;
+    fill: #04f5ff;
   }
-  28% {
-    transform: scale(0.98);
-    opacity: 0.6;
-  }
-  42% {
-    transform: scale(1.03);
-    opacity: 0.9;
-  }
-  60% {
-    opacity: 0.5;
+  35%,
+  100% {
+    opacity: 0.18;
+    fill: #fff;
   }
 }
 
-@keyframes flicker {
-  0%,
-  100% {
+@keyframes blink {
+  0% {
     opacity: 1;
+    fill: #00ff85;
   }
-  8% {
+  50% {
     opacity: 0.2;
   }
-  10% {
+}
+
+@keyframes breathe {
+  from {
+    opacity: 0.7;
+    transform: scale(0.97);
+  }
+  to {
     opacity: 1;
-  }
-  47% {
-    opacity: 0.85;
-  }
-  52% {
-    opacity: 0.12;
-  }
-  54% {
-    opacity: 1;
+    transform: scale(1.04);
   }
 }
 
-@keyframes thud {
+@keyframes pop {
   0% {
     transform: none;
   }
-  20% {
-    transform: translate(-7px, 5px);
-  }
-  40% {
-    transform: translate(6px, -4px);
-  }
-  60% {
-    transform: translate(-3px, 2px);
-  }
-  80% {
-    transform: translate(2px, -1px);
+  35% {
+    transform: scale(1.03);
   }
   100% {
     transform: none;
@@ -167,15 +144,12 @@
   }
 }
 
-@keyframes drip {
-  0%,
-  60% {
-    transform: scaleY(1);
-  }
-  85% {
-    transform: scaleY(1.9);
-  }
-  100% {
-    transform: scaleY(1);
+@media (prefers-reduced-motion: reduce) {
+  .spinning::before,
+  .landed,
+  .landed::after,
+  .spinning .led,
+  .landed .led {
+    animation: none;
   }
 }
