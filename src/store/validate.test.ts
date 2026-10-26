@@ -26,12 +26,20 @@ describe('validateAppState', () => {
     if (!res.ok) expect(res.error).toMatch(/loser/);
   });
 
-  it('rejects duplicate game weeks', () => {
+  it('rejects the same loser twice in a game week', () => {
     const state = clone(createSeedState());
-    state.gameWeeks[1].gameWeek = 1;
+    // GW1 and GW3 are both Keanen.
+    state.gameWeeks[2].gameWeek = 1;
     const res = validateAppState(state);
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toMatch(/twice/);
+  });
+
+  it('accepts a tie', () => {
+    const state = clone(createSeedState());
+    // GW2 is Kyle, GW1 is Keanen.
+    state.gameWeeks[1].gameWeek = 1;
+    expect(validateAppState(state).ok).toBe(true);
   });
 
   it('rejects a missing player', () => {

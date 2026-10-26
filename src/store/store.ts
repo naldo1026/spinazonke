@@ -3,10 +3,11 @@ import { createJSONStorage, persist, type StateStorage } from 'zustand/middlewar
 import type { AppState, CoinToss, GameWeekEntry, PlayerId, RitualState } from '../types';
 import { PLAYER_IDS } from '../types';
 import { createSeedState, STATE_VERSION } from '../data/seed';
+import { PLAYERS } from '../data/players';
 import { PHOTO_MANIFEST } from '../data/photos';
 import { nextPhoto, syncPool } from '../lib/photoPool';
 import { uid } from '../lib/random';
-import { LIVES, MAX_GAME_WEEK } from './selectors';
+import { findEntry, LIVES, MAX_GAME_WEEK } from './selectors';
 
 export const STORAGE_KEY = 'spinazonke:v1';
 
@@ -37,29 +38,39 @@ const safeStorage: StateStorage = {
   },
 };
 
-export type RecordResult = { ok: true; eliminated: boolean } | { ok: false; error: string };
+/** `eliminated` lists the losers whose loss was their 5th, 10th… */
+export type RecordResult = { ok: true; eliminated: PlayerId[] } | { ok: false; error: string };
+
+/** One loser's entry. A tied game week has one entry per loser. */
+export interface EntryKey {
+  gameWeek: number;
+  loser: PlayerId;
+}
 
 interface Actions {
-  recordLoss(gameWeek: number, loser: PlayerId): RecordResult;
-  updateLoser(gameWeek: number, loser: PlayerId): void;
-  deleteGameWeek(gameWeek: number): void;
+  /** Records every loser for the week, or none of them if any would fail. */
+  recordLoss(gameWeek: number, losers: PlayerId[]): RecordResult;
+  updateLoser(gameWeek: number, from: PlayerId, to: PlayerId): void;
+  deleteGameWeek(gameWeek: number, loser: PlayerId): void;
 
-  /** Adds to the bank (on the wheel). Pass `gameWeek` when it's the pay-to-play add. Returns the id. */
-  addConsequence(text: string, createdBy?: PlayerId, gameWeek?: number): string;
+  /** Adds to the bank (on the wheel). Pass `entry` when it's the pay-to-play add. Returns the id. */
+  addConsequence(text: string, createdBy?: PlayerId, entry?: EntryKey): string;
   editConsequence(id: string, text: string): void;
   setOnWheel(id: string, onWheel: boolean): void;
   archiveConsequence(id: string): void;
   restoreConsequence(id: string): void;
   deleteConsequence(id: string): void;
 
-  applyCoinToss(gameWeek: number, toss: CoinToss): void;
-  commitSpin(gameWeek: number, consequenceId: string): void;
+  applyCoinToss(entry: EntryKey, toss: CoinToss): void;
+  commitSpin(entry: EntryKey, consequenceId: string): void;
   /** Records the next photo for the player. Returns its path, or null if they have no photos. */
   revealPhoto(player: PlayerId, gameWeek: number): string | null;
   syncPhotoPools(): void;
 
   startRitual(gameWeek: number): void;
   updateRitual(patch: Partial<RitualState>): void;
+  /** Hands the ritual to the next tied loser, back at step 2. */
+  nextLoser(): void;
   endRitual(): void;
 
   setMuted(muted: boolean): void;
@@ -71,25 +82,27 @@ interface Actions {
 
 export type Store = AppState & Actions;
 
-export function gameWeekError(gameWeek: number, gameWeeks: readonly GameWeekEntry[]): string | null {
+export function gameWeekError(gameWeek: number, loser: PlayerId, gameWeeks: readonly GameWeekEntry[]): string | null {
   if (!Number.isInteger(gameWeek) || gameWeek < 1 || gameWeek > MAX_GAME_WEEK) {
     return `Game week must be between 1 and ${MAX_GAME_WEEK}.`;
   }
-  if (gameWeeks.some((gw) => gw.gameWeek === gameWeek)) return `GW${gameWeek} already has a loser.`;
+  if (findEntry(gameWeeks, gameWeek, loser)) return `${PLAYERS[loser].name} already lost GW${gameWeek}.`;
   return null;
 }
+
+const entryId = (gw: EntryKey) => `${gw.gameWeek}:${gw.loser}`;
 
 /** Recomputes `triggeredReveal` so it stays right after edits: true on each player's 5th, 10th… loss. */
 function withRevealFlags(gameWeeks: GameWeekEntry[]): GameWeekEntry[] {
   const counts = { ronaldo: 0, kyle: 0, keanan: 0 } as Record<PlayerId, number>;
-  const flagged = new Set<number>();
+  const flagged = new Set<string>();
   for (const gw of gameWeeks.slice().sort((a, b) => a.gameWeek - b.gameWeek)) {
     counts[gw.loser] += 1;
-    if (counts[gw.loser] % LIVES === 0) flagged.add(gw.gameWeek);
+    if (counts[gw.loser] % LIVES === 0) flagged.add(entryId(gw));
   }
   return gameWeeks
     .map((gw) => {
-      const triggered = flagged.has(gw.gameWeek);
+      const triggered = flagged.has(entryId(gw));
       if (Boolean(gw.triggeredReveal) === triggered) return gw;
       const { triggeredReveal: _, ...rest } = gw;
       return triggered ? { ...rest, triggeredReveal: true } : rest;
@@ -97,8 +110,8 @@ function withRevealFlags(gameWeeks: GameWeekEntry[]): GameWeekEntry[] {
     .sort((a, b) => a.gameWeek - b.gameWeek);
 }
 
-function mapGameWeek(gameWeeks: GameWeekEntry[], gameWeek: number, fn: (gw: GameWeekEntry) => GameWeekEntry) {
-  return gameWeeks.map((gw) => (gw.gameWeek === gameWeek ? fn(gw) : gw));
+function mapEntry(gameWeeks: GameWeekEntry[], key: EntryKey, fn: (gw: GameWeekEntry) => GameWeekEntry) {
+  return gameWeeks.map((gw) => (entryId(gw) === entryId(key) ? fn(gw) : gw));
 }
 
 function pickState(s: Store): AppState {
@@ -117,30 +130,35 @@ export const useStore = create<Store>()(
     (set, get) => ({
       ...createSeedState(),
 
-      recordLoss(gameWeek, loser) {
-        const error = gameWeekError(gameWeek, get().gameWeeks);
-        if (error) return { ok: false, error };
-        const entry: GameWeekEntry = {
-          gameWeek,
-          loser,
-          recordedAt: new Date().toISOString(),
-          addedConsequenceIds: [],
-        };
-        const gameWeeks = withRevealFlags([...get().gameWeeks, entry]);
+      recordLoss(gameWeek, losers) {
+        if (losers.length === 0) return { ok: false, error: 'Pick who lost.' };
+        if (new Set(losers).size !== losers.length) return { ok: false, error: 'Someone is picked twice.' };
+        for (const loser of losers) {
+          const error = gameWeekError(gameWeek, loser, get().gameWeeks);
+          if (error) return { ok: false, error };
+        }
+        const recordedAt = new Date().toISOString();
+        const entries: GameWeekEntry[] = losers.map((loser) => ({ gameWeek, loser, recordedAt, addedConsequenceIds: [] }));
+        const gameWeeks = withRevealFlags([...get().gameWeeks, ...entries]);
         set({ gameWeeks });
-        const saved = gameWeeks.find((gw) => gw.gameWeek === gameWeek);
-        return { ok: true, eliminated: Boolean(saved?.triggeredReveal) };
+        const eliminated = losers.filter((loser) => findEntry(gameWeeks, gameWeek, loser)?.triggeredReveal);
+        return { ok: true, eliminated };
       },
 
-      updateLoser(gameWeek, loser) {
-        set((s) => ({ gameWeeks: withRevealFlags(mapGameWeek(s.gameWeeks, gameWeek, (gw) => ({ ...gw, loser }))) }));
+      updateLoser(gameWeek, from, to) {
+        // A player can't lose the same week twice.
+        if (findEntry(get().gameWeeks, gameWeek, to)) return;
+        set((s) => ({
+          gameWeeks: withRevealFlags(mapEntry(s.gameWeeks, { gameWeek, loser: from }, (gw) => ({ ...gw, loser: to }))),
+        }));
       },
 
-      deleteGameWeek(gameWeek) {
-        set((s) => ({ gameWeeks: withRevealFlags(s.gameWeeks.filter((gw) => gw.gameWeek !== gameWeek)) }));
+      deleteGameWeek(gameWeek, loser) {
+        const key = entryId({ gameWeek, loser });
+        set((s) => ({ gameWeeks: withRevealFlags(s.gameWeeks.filter((gw) => entryId(gw) !== key)) }));
       },
 
-      addConsequence(text, createdBy, gameWeek) {
+      addConsequence(text, createdBy, entry) {
         const id = uid();
         set((s) => ({
           consequences: [
@@ -156,9 +174,9 @@ export const useStore = create<Store>()(
             },
           ],
           gameWeeks:
-            gameWeek === undefined
+            entry === undefined
               ? s.gameWeeks
-              : mapGameWeek(s.gameWeeks, gameWeek, (gw) => ({
+              : mapEntry(s.gameWeeks, entry, (gw) => ({
                   ...gw,
                   addedConsequenceIds: [...gw.addedConsequenceIds, id],
                 })),
@@ -188,23 +206,23 @@ export const useStore = create<Store>()(
         set((s) => ({ consequences: s.consequences.filter((c) => c.id !== id) }));
       },
 
-      applyCoinToss(gameWeek, toss) {
+      applyCoinToss(entry, toss) {
         const removed = new Set(toss.removedConsequenceIds);
         set((s) => ({
           // Removed items go back to the bank, off the wheel. Never deleted.
           consequences: s.consequences.map((c) => (removed.has(c.id) ? { ...c, onWheel: false } : c)),
-          gameWeeks: mapGameWeek(s.gameWeeks, gameWeek, (gw) => ({ ...gw, coinToss: toss })),
+          gameWeeks: mapEntry(s.gameWeeks, entry, (gw) => ({ ...gw, coinToss: toss })),
         }));
       },
 
-      commitSpin(gameWeek, consequenceId) {
-        const entry = get().gameWeeks.find((gw) => gw.gameWeek === gameWeek);
+      commitSpin(key, consequenceId) {
+        const entry = findEntry(get().gameWeeks, key.gameWeek, key.loser);
         if (!entry || entry.landedConsequenceId) return; // already counted
         set((s) => ({
           consequences: s.consequences.map((c) =>
             c.id === consequenceId ? { ...c, timesLanded: c.timesLanded + 1 } : c,
           ),
-          gameWeeks: mapGameWeek(s.gameWeeks, gameWeek, (gw) => ({ ...gw, landedConsequenceId: consequenceId })),
+          gameWeeks: mapEntry(s.gameWeeks, key, (gw) => ({ ...gw, landedConsequenceId: consequenceId })),
         }));
       },
 
@@ -243,6 +261,23 @@ export const useStore = create<Store>()(
 
       updateRitual(patch) {
         set((s) => (s.ritualInProgress ? { ritualInProgress: { ...s.ritualInProgress, ...patch } } : {}));
+      },
+
+      nextLoser() {
+        const r = get().ritualInProgress;
+        const [loser, ...queue] = r?.queue ?? [];
+        if (!r || !loser) return;
+        const entry = findEntry(get().gameWeeks, r.gameWeek, loser);
+        // Built fresh so the last loser's toss, spin and reveal don't carry over.
+        set({
+          ritualInProgress: {
+            gameWeek: r.gameWeek,
+            step: 2,
+            loser,
+            ...(queue.length > 0 ? { queue } : {}),
+            revealDue: Boolean(entry?.triggeredReveal),
+          },
+        });
       },
 
       endRitual() {

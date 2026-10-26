@@ -54,7 +54,7 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
   const onWheel = wheelItems(consequences);
 
   const skip = () => {
-    applyCoinToss(ritual.gameWeek, { played: false, removedConsequenceIds: [] });
+    applyCoinToss({ gameWeek: ritual.gameWeek, loser: loserId }, { played: false, removedConsequenceIds: [] });
     updateRitual({ step: 4, toss: undefined });
   };
 
@@ -74,7 +74,7 @@ export function StepCoinToss({ ritual }: { ritual: RitualState }) {
   };
 
   const confirmRemoval = () => {
-    applyCoinToss(ritual.gameWeek, {
+    applyCoinToss({ gameWeek: ritual.gameWeek, loser: loserId }, {
       played: true,
       call: toss.call,
       result: toss.result,

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { GameWeekEntry, PlayerId } from '../types';
 import { PLAYER_IDS } from '../types';
 import { useStore } from '../store/store';
-import { MAX_GAME_WEEK, nextGameWeek, sortedNewestFirst } from '../store/selectors';
+import { findEntry, MAX_GAME_WEEK, nextGameWeek, sortedNewestFirst } from '../store/selectors';
 import { joinNames, playerName, PLAYERS } from '../data/players';
 import { Leaderboard } from '../components/Leaderboard';
 import { ConfirmDialog } from '../components/Modal';
@@ -39,7 +39,7 @@ export function History() {
 
   const quickAdd = (e: FormEvent) => {
     e.preventDefault();
-    const res = recordLoss(Number(gw), loser);
+    const res = recordLoss(Number(gw), [loser]);
     if (!res.ok) {
       setError(res.error);
       return;
@@ -51,8 +51,8 @@ export function History() {
 
   const confirm = () => {
     if (!pending) return;
-    if (pending.kind === 'change') updateLoser(pending.gameWeek, pending.to);
-    else deleteGameWeek(pending.gameWeek);
+    if (pending.kind === 'change') updateLoser(pending.gameWeek, pending.from, pending.to);
+    else deleteGameWeek(pending.gameWeek, pending.loser);
     setPending(null);
   };
 
@@ -67,7 +67,7 @@ export function History() {
 
       <form className={`card ${styles.quick}`} onSubmit={quickAdd}>
         <h2 className="section-title">Quick add</h2>
-        <p className="faint">For a week you played without the ritual. Just logs the loser.</p>
+        <p className="faint">For a week you played without the ritual. Just logs the loser. Add a tie as two entries.</p>
         <div className={styles.quickRow}>
           <label className="field">
             <span>GW</span>
@@ -105,9 +105,14 @@ export function History() {
         {sortedNewestFirst(gameWeeks).map((entry) => {
           const landed = text(entry.landedConsequenceId);
           const toss = tossSummary(entry);
-          const live = ritual?.gameWeek === entry.gameWeek;
+          const live = ritual?.gameWeek === entry.gameWeek && ritual.loser === entry.loser;
+          const tied = gameWeeks.some((g) => g.gameWeek === entry.gameWeek && g.loser !== entry.loser);
           return (
-            <li key={entry.gameWeek} className={styles.row} style={{ borderLeftColor: PLAYERS[entry.loser].colour }}>
+            <li
+              key={`${entry.gameWeek}-${entry.loser}`}
+              className={styles.row}
+              style={{ borderLeftColor: PLAYERS[entry.loser].colour }}
+            >
               <div className={styles.gwBadge}>
                 <span>GW</span>
                 <strong>{entry.gameWeek}</strong>
@@ -128,11 +133,17 @@ export function History() {
                     }
                   >
                     {PLAYER_IDS.map((id) => (
-                      <option key={id} value={id}>
+                      <option
+                        key={id}
+                        value={id}
+                        // Already lost this week in a tie: can't lose it twice.
+                        disabled={id !== entry.loser && Boolean(findEntry(gameWeeks, entry.gameWeek, id))}
+                      >
                         {playerName(id)}
                       </option>
                     ))}
                   </select>
+                  {tied && <span className="badge badge-green">Tie</span>}
                   {entry.legacy && <span className="badge">Legacy</span>}
                   {entry.triggeredReveal && <span className="badge badge-pink">Eliminated</span>}
                   {live && <span className="badge badge-cyan">In progress</span>}
@@ -152,7 +163,7 @@ export function History() {
               <button
                 type="button"
                 className="icon-btn"
-                aria-label={`Delete GW${entry.gameWeek}`}
+                aria-label={`Delete ${playerName(entry.loser)}'s GW${entry.gameWeek} loss`}
                 title="Delete"
                 onClick={() => setPending({ kind: 'delete', gameWeek: entry.gameWeek, loser: entry.loser })}
               >
@@ -165,7 +176,11 @@ export function History() {
 
       <ConfirmDialog
         open={pending !== null}
-        title={pending?.kind === 'delete' ? `Delete GW${pending.gameWeek}?` : `Change GW${pending?.gameWeek ?? ''} loser?`}
+        title={
+          pending?.kind === 'delete'
+            ? `Delete ${playerName(pending.loser)}'s GW${pending.gameWeek} loss?`
+            : `Change GW${pending?.gameWeek ?? ''} loser?`
+        }
         message={
           pending?.kind === 'delete' ? (
             <p>

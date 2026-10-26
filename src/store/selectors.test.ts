@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { GameWeekEntry, PlayerId } from '../types';
 import { createSeedState } from '../data/seed';
 import {
+  findEntry,
   heartsLeft,
   isElimination,
   leaderboard,
@@ -64,6 +65,21 @@ describe('nextGameWeek', () => {
 
   it('is null after GW38', () => {
     expect(nextGameWeek([gw(38, 'kyle')])).toBeNull();
+  });
+});
+
+describe('findEntry', () => {
+  it('tells tied losers apart', () => {
+    const weeks = [gw(8, 'ronaldo'), gw(8, 'kyle')];
+    expect(findEntry(weeks, 8, 'kyle')).toBe(weeks[1]);
+    expect(findEntry(weeks, 8, 'keanan')).toBeUndefined();
+    expect(findEntry(weeks, 8, undefined)).toBeUndefined();
+  });
+
+  it('counts a tie as a loss for both, and the next week is still GW9', () => {
+    const weeks = [gw(7, 'keanan'), gw(8, 'ronaldo'), gw(8, 'kyle')];
+    expect(lossesByPlayer(weeks)).toEqual({ ronaldo: 1, kyle: 1, keanan: 1 });
+    expect(nextGameWeek(weeks)).toBe(9);
   });
 });
 

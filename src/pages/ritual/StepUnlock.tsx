@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { PlayerId, RitualState } from '../../types';
 import { PLAYER_IDS } from '../../types';
 import { useStore } from '../../store/store';
-import { MIN_WHEEL_PRE_TOSS, wheelItems } from '../../store/selectors';
+import { findEntry, MIN_WHEEL_PRE_TOSS, wheelItems } from '../../store/selectors';
 import { playerName } from '../../data/players';
 import { audio } from '../../audio/audioManager';
 import { Padlock } from '../../components/Padlock';
@@ -18,7 +18,7 @@ export function StepUnlock({ ritual }: { ritual: RitualState }) {
   const [text, setText] = useState('');
   const [by, setBy] = useState<PlayerId | ''>('');
 
-  const entry = gameWeeks.find((gw) => gw.gameWeek === ritual.gameWeek);
+  const entry = findEntry(gameWeeks, ritual.gameWeek, ritual.loser);
   const added = (entry?.addedConsequenceIds ?? [])
     .map((id) => consequences.find((c) => c.id === id))
     .filter((c) => c !== undefined);
@@ -30,8 +30,8 @@ export function StepUnlock({ ritual }: { ritual: RitualState }) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    addConsequence(text, by || undefined, ritual.gameWeek);
+    if (!text.trim() || !ritual.loser) return;
+    addConsequence(text, by || undefined, { gameWeek: ritual.gameWeek, loser: ritual.loser });
     setText('');
     if (!unlocked) {
       // This click is the user gesture browsers need before audio can start.

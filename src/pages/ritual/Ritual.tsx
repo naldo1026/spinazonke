@@ -2,9 +2,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../../store/store';
-import { nextGameWeek } from '../../store/selectors';
+import { findEntry, nextGameWeek } from '../../store/selectors';
 import { audio, useTrack } from '../../audio/audioManager';
-import { playerName } from '../../data/players';
+import { joinNames, playerName } from '../../data/players';
 import { Modal } from '../../components/Modal';
 import { Wheel } from '../../components/Wheel';
 import { wheelItems } from '../../store/selectors';
@@ -62,7 +62,7 @@ export function Ritual() {
   if (!ritual) return <NotStarted />;
 
   // Browsers block autoplay, so after a refresh mid-ritual the music needs a tap to come back.
-  const unlocked = Boolean(gameWeeks.find((gw) => gw.gameWeek === ritual.gameWeek)?.addedConsequenceIds.length);
+  const unlocked = Boolean(findEntry(gameWeeks, ritual.gameWeek, ritual.loser)?.addedConsequenceIds.length);
   const musicDue = (ritual.step === 2 && unlocked) || ritual.step === 3;
   const showResume = musicDue && !dramatic.playing && dramatic.available;
 
@@ -70,10 +70,14 @@ export function Ritual() {
     (s) => s.step !== 5 || ritual.revealDue,
   );
   const dark = ritual.step === 3 || ritual.step === 4;
+  const tied = gameWeeks.filter((gw) => gw.gameWeek === ritual.gameWeek).length > 1;
+  // Losers who haven't finished yet. Anyone who already did keeps their entry.
+  const unfinished = ritual.loser ? [ritual.loser, ...(ritual.queue ?? [])] : [];
+  const plural = unfinished.length > 1;
 
   const cancel = (undoLoss: boolean) => {
     audio.stopAll();
-    if (undoLoss) deleteGameWeek(ritual.gameWeek);
+    if (undoLoss) for (const loser of unfinished) deleteGameWeek(ritual.gameWeek, loser);
     setCancelOpen(false);
     endRitual();
   };
@@ -103,7 +107,10 @@ export function Ritual() {
     <div className={`${styles.ritual} ${dark ? styles.dark : ''}`}>
       <div className={styles.topBar}>
         <div className={styles.topInner}>
-          <span className={styles.gw}>GW{ritual.gameWeek}</span>
+          <span className={styles.gw}>
+            GW{ritual.gameWeek}
+            {tied && ritual.loser && ` · ${playerName(ritual.loser)}`}
+          </span>
           <ol className={styles.pips} aria-label="Progress">
             {stepKeys.map((s) => (
               <li
@@ -161,10 +168,10 @@ export function Ritual() {
                 Keep going
               </button>
               <button type="button" className="btn btn-cyan" onClick={() => cancel(false)}>
-                Cancel, keep the loss
+                Cancel, keep {plural ? 'the losses' : 'the loss'}
               </button>
               <button type="button" className="btn btn-danger" onClick={() => cancel(true)}>
-                Cancel &amp; undo loss
+                Cancel &amp; undo {plural ? 'losses' : 'loss'}
               </button>
             </>
           ) : (
@@ -181,8 +188,8 @@ export function Ritual() {
       >
         {ritual.loser ? (
           <p>
-            {playerName(ritual.loser)}'s GW{ritual.gameWeek} loss is already recorded. Keep it or undo it? Anything
-            added to the bank this week stays there.
+            {joinNames(unfinished)}'s GW{ritual.gameWeek} {plural ? 'losses are' : 'loss is'} already recorded. Keep{' '}
+            {plural ? 'them' : 'it'} or undo {plural ? 'them' : 'it'}? Anything added to the bank this week stays there.
           </p>
         ) : (
           <p>Nothing has been recorded yet.</p>

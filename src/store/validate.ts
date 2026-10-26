@@ -78,10 +78,12 @@ export function validateAppState(input: unknown): ValidationResult {
     const consequences = input.consequences.map(checkConsequence);
     const gameWeeks = input.gameWeeks.map(checkGameWeek);
 
-    const seen = new Set<number>();
+    // Ties mean a GW can appear more than once, but never with the same loser.
+    const seen = new Set<string>();
     for (const gw of gameWeeks) {
-      check(!seen.has(gw.gameWeek), `GW${gw.gameWeek} appears twice.`);
-      seen.add(gw.gameWeek);
+      const key = `${gw.gameWeek}:${gw.loser}`;
+      check(!seen.has(key), `${gw.loser} appears twice in GW${gw.gameWeek}.`);
+      seen.add(key);
     }
 
     const s = input.settings;

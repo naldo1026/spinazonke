@@ -6,6 +6,15 @@ export const MAX_GAME_WEEK = 38;
 export const MIN_WHEEL_PRE_TOSS = 4;
 export const TOSS_REMOVALS = 3;
 
+/** A game week can have more than one loser (ties), so an entry is found by both. */
+export function findEntry(
+  gameWeeks: readonly GameWeekEntry[],
+  gameWeek: number,
+  loser: PlayerId | undefined,
+): GameWeekEntry | undefined {
+  return gameWeeks.find((gw) => gw.gameWeek === gameWeek && gw.loser === loser);
+}
+
 export function lossesByPlayer(gameWeeks: readonly GameWeekEntry[]): Record<PlayerId, number> {
   const out = { ronaldo: 0, kyle: 0, keanan: 0 } as Record<PlayerId, number>;
   for (const gw of gameWeeks) out[gw.loser] += 1;

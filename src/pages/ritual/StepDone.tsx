@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { RitualState } from '../../types';
 import { PLAYER_IDS } from '../../types';
 import { useStore } from '../../store/store';
+import { findEntry } from '../../store/selectors';
 import { joinNames, playerName } from '../../data/players';
 import { audio } from '../../audio/audioManager';
 import { PlayerAvatar } from '../../components/PlayerCard';
@@ -11,17 +12,24 @@ export function StepDone({ ritual }: { ritual: RitualState }) {
   const gameWeeks = useStore((s) => s.gameWeeks);
   const consequences = useStore((s) => s.consequences);
   const endRitual = useStore((s) => s.endRitual);
+  const nextLoser = useStore((s) => s.nextLoser);
   const navigate = useNavigate();
 
-  const entry = gameWeeks.find((gw) => gw.gameWeek === ritual.gameWeek);
+  const entry = findEntry(gameWeeks, ritual.gameWeek, ritual.loser);
   const text = (id: string) => consequences.find((c) => c.id === id)?.text ?? '(deleted)';
   const loserId = ritual.loser!;
   const toss = entry?.coinToss;
+  const next = ritual.queue?.[0];
 
   const finish = () => {
     audio.stopAll();
     endRitual();
     navigate('/');
+  };
+
+  const handOver = () => {
+    audio.stopAll();
+    nextLoser();
   };
 
   let tossLine = 'Skipped';
@@ -33,9 +41,17 @@ export function StepDone({ ritual }: { ritual: RitualState }) {
 
   return (
     <div className={`${styles.step} ${styles.center}`}>
-      <span className="eyebrow">Full time</span>
+      <span className="eyebrow">{next ? `${playerName(loserId)} is done` : 'Full time'}</span>
       <h1 className={styles.title}>
-        GW{ritual.gameWeek} <em>done</em>
+        {next ? (
+          <>
+            {playerName(next)}, <em>you're up</em>
+          </>
+        ) : (
+          <>
+            GW{ritual.gameWeek} <em>done</em>
+          </>
+        )}
       </h1>
 
       <article className={`card ${styles.summary}`}>
@@ -98,9 +114,15 @@ export function StepDone({ ritual }: { ritual: RitualState }) {
         </dl>
       </article>
 
-      <button type="button" className="btn btn-primary btn-lg" onClick={finish}>
-        Back to home
-      </button>
+      {next ? (
+        <button type="button" className="btn btn-primary btn-lg" onClick={handOver}>
+          {playerName(next)}'s turn →
+        </button>
+      ) : (
+        <button type="button" className="btn btn-primary btn-lg" onClick={finish}>
+          Back to home
+        </button>
+      )}
     </div>
   );
 }

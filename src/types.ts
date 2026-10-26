@@ -55,8 +55,11 @@ export type TossPhase = 'intro' | 'call' | 'flip' | 'pick';
 export interface RitualState {
   gameWeek: number;
   step: RitualStep;
+  /** Whoever is going through steps 2–6 right now. */
   loser?: PlayerId;
-  /** The loss in step 1 hit a multiple of 5. */
+  /** Tied losers still waiting for their turn, in order. */
+  queue?: PlayerId[];
+  /** The current loser's loss hit a multiple of 5. */
   revealDue: boolean;
   toss?: {
     phase: TossPhase;

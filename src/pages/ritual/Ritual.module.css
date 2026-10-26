@@ -31,6 +31,7 @@
 }
 
 .gw {
+  white-space: nowrap;
   font-family: var(--font-display);
   font-weight: 900;
   font-size: 1.3rem;
@@ -227,6 +228,13 @@
 }
 
 /* Step 1 after recording */
+.lossCards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
 .lossCard {
   width: 100%;
   max-width: 380px;

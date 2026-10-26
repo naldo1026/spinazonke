@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RitualState } from '../../types';
 import { useStore } from '../../store/store';
-import { MIN_WHEEL_PRE_TOSS, wheelItems } from '../../store/selectors';
+import { findEntry, MIN_WHEEL_PRE_TOSS, wheelItems } from '../../store/selectors';
 import { playerName } from '../../data/players';
 import { randomFloat, randomInt, randomRange } from '../../lib/random';
 import { targetRotation } from '../../lib/wheelMath';
@@ -29,7 +29,7 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
   const items = ritual.spin
     ? ritual.spin.segmentIds.map((id) => consequences.find((c) => c.id === id)).filter((c) => c !== undefined)
     : wheelItems(consequences);
-  const entry = gameWeeks.find((gw) => gw.gameWeek === ritual.gameWeek);
+  const entry = findEntry(gameWeeks, ritual.gameWeek, ritual.loser);
   const minimum = entry?.coinToss?.played ? 1 : MIN_WHEEL_PRE_TOSS;
   const landed = ritual.spin ? consequences.find((c) => c.id === ritual.spin!.targetId) : undefined;
   const loser = ritual.loser ? playerName(ritual.loser) : 'The loser';
@@ -39,8 +39,8 @@ export function StepSpin({ ritual }: { ritual: RitualState }) {
     finished.current = true;
     clearTimeout(timer.current);
     const { ritualInProgress: r, commitSpin, updateRitual: update } = useStore.getState();
-    if (!r?.spin) return;
-    commitSpin(r.gameWeek, r.spin.targetId);
+    if (!r?.spin || !r.loser) return;
+    commitSpin({ gameWeek: r.gameWeek, loser: r.loser }, r.spin.targetId);
     update({ spin: { ...r.spin, committed: true } });
     setPhase('landed');
     if (fanfare) {
